@@ -1,3 +1,5 @@
+import { FeatureReveal } from "@/components/feature-reveal";
+
 const FEATURES = [
   {
     title: "Talk, don't drill",
@@ -33,11 +35,8 @@ export default function HomePage() {
         </p>
       </header>
 
-      <section
-        id="features"
-        aria-label="What's inside"
-        className="mt-10 grid gap-3"
-      >
+      {/* Progressive disclosure: the button actually reveals the cards. */}
+      <FeatureReveal>
         {FEATURES.map((f) => (
           <article
             key={f.title}
@@ -47,20 +46,11 @@ export default function HomePage() {
             <p className="mt-1.5 text-sm text-[var(--muted)]">{f.body}</p>
           </article>
         ))}
-      </section>
+      </FeatureReveal>
 
-      {/* Primary control lives low, within thumb reach (FR-1212). */}
-      <div className="mt-auto pt-10">
-        <a
-          href="#features"
-          className="tap-target flex w-full items-center justify-center rounded-full bg-[var(--accent)] px-6 py-4 text-base font-semibold text-[var(--accent-contrast)] transition-transform active:scale-[0.98]"
-        >
-          See what&apos;s inside
-        </a>
-        <p className="mt-4 text-center text-xs text-[var(--muted)]">
-          Foundation build · sign-in and voice practice arrive next.
-        </p>
-      </div>
+      <p className="mt-auto pt-10 text-center text-xs text-[var(--muted)]">
+        Foundation build · sign-in and voice practice arrive next.
+      </p>
     </main>
   );
 }
