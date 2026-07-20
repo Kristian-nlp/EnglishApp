@@ -43,6 +43,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       maxAge: FIFTEEN_MINUTES_S, // magic-link validity (FR-101)
     }),
   ],
+  pages: {
+    signIn: "/signin", // custom, branded sign-in screen (FR-101/102)
+  },
   callbacks: {
     // Surface the DB user id on the session so every route can scope queries by
     // it server-side (FR-109). The client never supplies a user id.

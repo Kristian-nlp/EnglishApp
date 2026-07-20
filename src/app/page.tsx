@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { FeatureReveal } from "@/components/feature-reveal";
 
 const FEATURES = [
@@ -22,11 +23,21 @@ const FEATURES = [
 export default function HomePage() {
   return (
     <main className="safe-area mx-auto flex min-h-dvh w-full max-w-md flex-col px-5 pb-10">
-      <header className="pt-10">
+      <div className="flex items-center justify-between pt-6">
         <p className="text-sm font-medium tracking-wide text-[var(--accent)]">
           English Tutor
         </p>
-        <h1 className="mt-3 text-3xl font-bold leading-tight">
+        {/* Secondary controls live at the top (FR-1212). */}
+        <Link
+          href="/signin"
+          className="tap-target inline-flex items-center rounded-full px-3 py-2 text-sm font-medium text-[var(--foreground)] transition-colors hover:text-[var(--accent)]"
+        >
+          Sign in
+        </Link>
+      </div>
+
+      <header className="pt-6">
+        <h1 className="text-3xl font-bold leading-tight">
           Speak English with a tutor who never gets tired.
         </h1>
         <p className="mt-4 text-[var(--muted)]">
@@ -48,9 +59,18 @@ export default function HomePage() {
         ))}
       </FeatureReveal>
 
-      <p className="mt-auto pt-10 text-center text-xs text-[var(--muted)]">
-        Foundation build · sign-in and voice practice arrive next.
-      </p>
+      {/* Primary call to action, low for thumb reach (FR-1212). */}
+      <div className="mt-auto pt-10">
+        <Link
+          href="/signin"
+          className="tap-target flex w-full items-center justify-center rounded-full bg-[var(--accent)] px-6 py-4 text-base font-semibold text-[var(--accent-contrast)] transition-transform active:scale-[0.98]"
+        >
+          Get started
+        </Link>
+        <p className="mt-4 text-center text-xs text-[var(--muted)]">
+          Foundation build · voice practice arrives next.
+        </p>
+      </div>
     </main>
   );
 }
