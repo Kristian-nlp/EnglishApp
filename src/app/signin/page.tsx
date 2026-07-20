@@ -1,18 +1,24 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
 import { auth, isDevLoginEnabled, signIn } from "@/auth";
-import { getServerEnv } from "@/lib/env";
 
 export const metadata = { title: "Sign in — English Tutor" };
 
-/** True when the auth secrets are present (Google, Resend, DB, AUTH_SECRET). */
-function isAuthConfigured(): boolean {
-  try {
-    getServerEnv();
-    return true;
-  } catch {
-    return false;
-  }
+/**
+ * Which real sign-in methods are ready, based only on the env each one actually
+ * needs — not the whole app's secret set. Both need a session secret and a
+ * database (users are persisted there); then Google needs its OAuth pair and
+ * the magic link needs a Resend key.
+ */
+function authReadiness() {
+  const base =
+    Boolean(process.env.AUTH_SECRET) && Boolean(process.env.DATABASE_URL);
+  const google =
+    base &&
+    Boolean(process.env.AUTH_GOOGLE_ID) &&
+    Boolean(process.env.AUTH_GOOGLE_SECRET);
+  const email = base && Boolean(process.env.RESEND_API_KEY);
+  return { google, email, any: google || email };
 }
 
 export default async function SignInPage({
@@ -20,13 +26,14 @@ export default async function SignInPage({
 }: {
   searchParams: Promise<{ error?: string }>;
 }) {
-  const configured = isAuthConfigured();
+  const { google: googleReady, email: emailReady, any: anyReady } =
+    authReadiness();
   const devLogin = isDevLoginEnabled();
 
   // Already signed in? Send them home. (redirect() must live outside try/catch,
   // since it works by throwing.)
   let signedIn = false;
-  if (configured) {
+  if (anyReady || devLogin) {
     try {
       const session = await auth();
       signedIn = Boolean(session?.user);
@@ -64,18 +71,20 @@ export default async function SignInPage({
         </p>
       ) : null}
 
-      {!configured ? (
+      {!anyReady ? (
         <div
           role="note"
           className="mt-6 rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 text-sm text-amber-200"
         >
-          <p className="font-semibold">Sign-in isn&apos;t configured here yet.</p>
+          <p className="font-semibold">
+            Google &amp; email sign-in aren&apos;t configured yet.
+          </p>
           <p className="mt-1.5 text-amber-200/80">
-            This preview has no auth credentials or database. To enable login,
-            set <code>AUTH_SECRET</code>, <code>AUTH_GOOGLE_ID</code>/
-            <code>SECRET</code>, <code>RESEND_API_KEY</code> and{" "}
-            <code>DATABASE_URL</code>, then run the DB migrations. See{" "}
-            <code>.env.example</code> and the README.
+            To enable them, set <code>AUTH_SECRET</code> and{" "}
+            <code>DATABASE_URL</code>, plus <code>AUTH_GOOGLE_ID</code>/
+            <code>SECRET</code> (for Google) or <code>RESEND_API_KEY</code> (for
+            the magic link), then run the DB migrations. See{" "}
+            <code>.env.example</code> and the README&apos;s Vercel guide.
           </p>
         </div>
       ) : null}
@@ -90,7 +99,7 @@ export default async function SignInPage({
         >
           <button
             type="submit"
-            disabled={!configured}
+            disabled={!googleReady}
             className="tap-target flex w-full items-center justify-center gap-3 rounded-full border border-[var(--border)] bg-[var(--surface)] px-6 py-4 text-base font-semibold transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             <GoogleGlyph />
@@ -125,12 +134,12 @@ export default async function SignInPage({
             autoComplete="email"
             inputMode="email"
             placeholder="you@example.com"
-            disabled={!configured}
+            disabled={!emailReady}
             className="tap-target w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3.5 text-base outline-none focus:border-[var(--accent)] disabled:opacity-50"
           />
           <button
             type="submit"
-            disabled={!configured}
+            disabled={!emailReady}
             className="tap-target flex w-full items-center justify-center rounded-full bg-[var(--accent)] px-6 py-4 text-base font-semibold text-[var(--accent-contrast)] transition-transform active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-50"
           >
             Email me a magic link

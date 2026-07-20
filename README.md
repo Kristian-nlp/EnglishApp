@@ -124,6 +124,67 @@ All external APIs will be mocked in CI — no test calls OpenAI or Azure (TEST-1
 
 ---
 
+## Deploying to Vercel (database + sign-in)
+
+Real sign-in needs a Postgres database (users and sessions are stored there), a
+session secret, and at least one provider. The quickest path is the **Neon**
+integration, whose env var names match this project exactly.
+
+### 1. Create the database (Neon via Vercel)
+
+1. Vercel dashboard → your project → **Storage** → **Create Database** →
+   **Neon** (Postgres) from the Marketplace. Pick a region near your learners
+   (e.g. Frankfurt).
+2. Vercel injects the connection env vars automatically, including
+   **`DATABASE_URL`** (pooled — used by the app, NFR-105) and
+   **`DATABASE_URL_UNPOOLED`** (direct — used for migrations). Confirm under
+   Project → Settings → Environment Variables.
+
+   Supabase works too (Storage → Supabase); just make sure `DATABASE_URL` is the
+   **pooled** string (port 6543) and `DATABASE_URL_UNPOOLED` the direct one
+   (port 5432).
+
+### 2. Apply the migrations
+
+The schema lives in `drizzle/`. Apply it once against the new database:
+
+```bash
+npm i -g vercel
+vercel link                    # link this folder to the Vercel project
+vercel env pull .env.local     # pulls DATABASE_URL_UNPOOLED etc.
+npm run db:migrate             # applies drizzle/0000_initial.sql
+```
+
+(Alternatively, paste `drizzle/0000_initial.sql` into the Neon SQL editor.)
+
+### 3. Add the remaining sign-in env vars
+
+In Project → Settings → Environment Variables (Production):
+
+| Variable | How to get it |
+|---|---|
+| `AUTH_SECRET` | `openssl rand -base64 32` |
+| `AUTH_GOOGLE_ID` / `AUTH_GOOGLE_SECRET` | Google Cloud → Credentials → OAuth client. Add the redirect URI `https://<your-app>/api/auth/callback/google`. |
+| `RESEND_API_KEY` + `AUTH_EMAIL_FROM` | Resend API key + a **verified** sender domain (for magic links). |
+
+You need Google **or** Resend — set both to offer both. Auth.js auto-detects the
+site URL on Vercel (`trustHost` is on), so `AUTH_URL` is optional.
+
+> **Never set `DEV_LOGIN` in production.** The dev test login is refused on
+> production Vercel deployments regardless, but leave it unset to be safe.
+
+### 4. Redeploy
+
+Redeploy so the env vars take effect. The sign-in buttons enable automatically
+once their vars are present — each provider is gated independently, so setting
+only Resend lights up the magic link while Google stays disabled.
+
+Full app functionality later also uses `UPSTASH_REDIS_REST_URL/TOKEN`,
+`BLOB_READ_WRITE_TOKEN` and `CRON_SECRET` (see `.env.example`), but none of those
+are needed just to sign in.
+
+---
+
 ## Roadmap (spec §8, adjusted for mobile §10.7)
 
 | Phase | Contents | Status |
