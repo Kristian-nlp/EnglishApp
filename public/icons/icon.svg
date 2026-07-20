@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512" role="img" aria-label="English Tutor">
+  <rect width="512" height="512" rx="0" fill="#0b0f14"/>
+  <!-- maskable safe zone: keep art within the central 80% -->
+  <g>
+    <path d="M136 128h240a48 48 0 0 1 48 48v128a48 48 0 0 1-48 48H236l-72 60a12 12 0 0 1-19-9v-51h-9a48 48 0 0 1-48-48V176a48 48 0 0 1 48-48z" fill="#4f9cf9"/>
+    <text x="256" y="268" font-family="system-ui, -apple-system, Segoe UI, Roboto, sans-serif" font-size="150" font-weight="700" fill="#05141f" text-anchor="middle" dominant-baseline="middle">En</text>
+  </g>
+</svg>
