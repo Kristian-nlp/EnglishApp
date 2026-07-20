@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { redirect } from "next/navigation";
-import { auth, signIn } from "@/auth";
+import { auth, isDevLoginEnabled, signIn } from "@/auth";
 import { getServerEnv } from "@/lib/env";
 
 export const metadata = { title: "Sign in — English Tutor" };
@@ -21,6 +21,7 @@ export default async function SignInPage({
   searchParams: Promise<{ error?: string }>;
 }) {
   const configured = isAuthConfigured();
+  const devLogin = isDevLoginEnabled();
 
   // Already signed in? Send them home. (redirect() must live outside try/catch,
   // since it works by throwing.)
@@ -136,6 +137,57 @@ export default async function SignInPage({
           </button>
         </form>
       </div>
+
+      {devLogin ? (
+        <section className="mt-8 rounded-2xl border border-dashed border-[var(--border)] p-4">
+          <p className="text-sm font-semibold">Developer login</p>
+          <p className="mt-1 text-xs text-[var(--muted)]">
+            Create and sign in as a test user — no email or Google needed. This
+            is disabled in production.
+          </p>
+          <form
+            action={async (formData: FormData) => {
+              "use server";
+              const email = String(formData.get("email") ?? "").trim();
+              const name = String(formData.get("name") ?? "").trim();
+              if (!email) return;
+              await signIn("dev", { email, name, redirectTo: "/app" });
+            }}
+            className="mt-3 grid gap-2"
+          >
+            <label htmlFor="dev-name" className="sr-only">
+              Display name
+            </label>
+            <input
+              id="dev-name"
+              name="name"
+              type="text"
+              autoComplete="off"
+              placeholder="Name (optional)"
+              className="tap-target w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-base outline-none focus:border-[var(--accent)]"
+            />
+            <label htmlFor="dev-email" className="sr-only">
+              Email
+            </label>
+            <input
+              id="dev-email"
+              name="email"
+              type="email"
+              required
+              autoComplete="off"
+              inputMode="email"
+              placeholder="dev@example.com"
+              className="tap-target w-full rounded-xl border border-[var(--border)] bg-[var(--surface)] px-4 py-3 text-base outline-none focus:border-[var(--accent)]"
+            />
+            <button
+              type="submit"
+              className="tap-target flex w-full items-center justify-center rounded-full border border-[var(--accent)] px-6 py-3 text-sm font-semibold text-[var(--accent)] transition-transform active:scale-[0.98]"
+            >
+              Create test user &amp; sign in
+            </button>
+          </form>
+        </section>
+      ) : null}
 
       <p className="mt-auto pt-10 text-center text-xs text-[var(--muted)]">
         The magic link is valid for 15 minutes and can be used once.
